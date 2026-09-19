@@ -1,0 +1,81 @@
+name: Build Flet App
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  PYTHONUTF8: 1
+  # https://flet.dev/docs/reference/environment-variables
+  FLET_CLI_NO_RICH_OUTPUT: 1
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            runner: windows-latest
+            build_cmd: flet build windows --yes
+            artifact_path: build/windows
+            needs_linux_deps: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Write version file
+        shell: bash
+        run: |
+          mkdir -p assets
+          VERSION="${{ github.event.release.tag_name }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="${GITHUB_REF_NAME:-dev}-${GITHUB_SHA::7}"
+          fi
+          printf '%s' "$VERSION" > assets/version.txt
+          echo "Wrote version: $VERSION"
+
+      - name: Build app
+        run: |
+          flet --version
+          ${{ matrix.build_cmd }}
+
+      - name: Create ZIP archive
+        id: zip
+        shell: bash
+        run: |
+          cd build/windows
+          ZIP_NAME="LotCalc-${{ github.event.release.tag_name }}-windows.zip"
+          # Use PowerShell's Compress-Archive (available on all Windows runners)
+          powershell -Command "Compress-Archive -Path * -DestinationPath '$ZIP_NAME' -Force"
+          echo "zip_path=build/windows/$ZIP_NAME" >> $GITHUB_OUTPUT
+          echo "zip_name=$ZIP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.zip.outputs.zip_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-build-artifact
+          path: ${{ matrix.artifact_path }}
+          if-no-files-found: error
+          overwrite: false

@@ -24,17 +24,23 @@ class ControlsPage:
         self.volume_step_text = ft.Text(str(self.volume_step))
         self.lot_size = 0
         self.lot_size_text = ft.Text(str(self.lot_size), color=ft.Colors.GREEN_400)
+        self.symbol_price = 0
+        self.symbol_price_text = ft.Text(str(self.symbol_price), color=ft.Colors.BLUE_400)
+        self.margin_size = 0
+        self.margin_size_text = ft.Text(str(self.margin_size), color=ft.Colors.ORANGE_400)
 
     async def run(self, page: ft.Page):
         if page.web:
             await page.browser_context_menu.disable()
 
         async def exit_app(e):
+            Functions.shutdown_mt5()
             await page.window.close()
 
-        def update_symbol(e):
-            Functions.update_symbol_dropdown(e, self, page)
-            Functions.refresh(e, self, page, show_dialog=False)
+        def update_symbol(_e):
+            Functions.update_symbol_dropdown(_e, self, page)
+            # Single page.update() via refresh() - no duplicate
+            Functions.refresh(_e, self, page, show_dialog=False)
 
 
         pipet_slider = ft.Slider(
@@ -75,11 +81,11 @@ class ControlsPage:
         main = ft.Column(spacing=2, alignment=ft.MainAxisAlignment.START)
 
         footer = ft.Container(
-            padding=ft.padding.symmetric(vertical=2),
+            padding=ft.Padding.symmetric(vertical=2),
             alignment=ft.Alignment.BOTTOM_CENTER,
             content=ft.Row(
                 [
-                    ft.FilledButton("Calculate", width=120,  on_click=lambda e: Functions.calc(e, self , page)),
+                    ft.FilledButton("Calculate", width=120,  on_click=lambda _e: Functions.calc(self , page)),
                     ft.OutlinedButton("Exit", width=120, on_click=exit_app),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -190,6 +196,17 @@ class ControlsPage:
                 ]
             )
         )
+        main.controls.append(
+            ft.Row(
+                controls=[
+                    ft.Text("Price:"),
+                    self.symbol_price_text,
+                    ft.Container(expand=True),
+                    ft.Text("Margin:"),
+                    self.margin_size_text,
+                ]
+            )
+        )
 
 
         panel = ft.SafeArea(
@@ -218,3 +235,4 @@ class ControlsPage:
         )
 
         page.add(panel)
+        Functions.refresh(None, self, page, show_dialog=False)

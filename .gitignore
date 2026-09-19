@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Classes-specific pycache
+classes/__pycache__/
+
+# Environments
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+
+# Build
+build/
+dist/
+
+# Generated assets
+assets/
