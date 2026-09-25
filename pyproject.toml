@@ -1,0 +1,19 @@
+[project]
+name = "lotcalc"
+version = "1.0.0"
+description = "MetaTrader 5 Risk Calculator"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flet>=1.0.0",
+    "MetaTrader5"
+]
+
+[tool.flet]
+org = "com.maestro6321"
+product = "LotCalc"
+company = "Maestro6321"
+copyright = "Copyright (C) 2026"
+
+[tool.flet.app]
+path = "src"

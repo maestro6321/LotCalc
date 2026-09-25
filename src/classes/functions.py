@@ -46,6 +46,75 @@ class Functions:
         return Decimal(str(margin))
 
     @staticmethod
+    def calc_from_percent(controls, page, entry_price=None):
+        """Calculate lot size using % price difference instead of pipet count."""
+        try:
+            balance = Decimal(str(controls.balance))
+            risk = Decimal(str(controls.risk))
+            percent_diff = Decimal(str(controls.pipet_size)) / Decimal("100")
+            volume_step = Decimal(str(controls.volume_step))
+
+            if balance <= 0 or risk <= 0 or percent_diff <= 0 or volume_step <= 0:
+                controls.lot_size = 0
+                controls.lot_size_text.value = "Invalid input"
+                page.update()
+                return
+
+            # Use entry price from MT5 if not provided
+            if entry_price is None:
+                entry_price = Decimal(str(controls.symbol_price))
+            if entry_price <= 0:
+                controls.lot_size = 0
+                controls.lot_size_text.value = "Need symbol price"
+                page.update()
+                return
+
+            # Price difference = % of entry
+            price_diff = entry_price * percent_diff
+            # Loss per lot = price_diff * contract_size / tick_size relative
+            # For simplicity: assume 1 lot exposed to full price_diff proportionally
+            # Actually using same logic as calc but with price_diff instead of pipet
+            # If pipet_size was previously a % (e.g. slider 0-200 meaning %), adjust
+            # Here percent_diff is direct % (e.g. 0.30)
+
+            tick_size = Decimal(str(controls.tick_size)) if controls.tick_size > 0 else Decimal("0.001")
+            tick_value = Decimal(str(controls.tick_value)) if controls.tick_value > 0 else Decimal("0.1")
+
+            # Loss per lot using tick-based pricing
+            # price_diff move = (price_diff / tick_size) ticks * tick_value $/lot
+            loss_per_lot = (price_diff / tick_size) * tick_value if tick_size > 0 else Decimal("0")
+
+            risk_amount = balance * risk / Decimal("100")
+            raw_lot_size = risk_amount / loss_per_lot if loss_per_lot > 0 else Decimal("0")
+
+            # Normalize with volume step
+            lot_size = (raw_lot_size / volume_step).to_integral_value(rounding=ROUND_DOWN) * volume_step
+        except (InvalidOperation, ValueError, ZeroDivisionError):
+            controls.lot_size = 0
+            controls.lot_size_text.value = "Invalid input"
+            page.update()
+            return
+
+        controls.lot_size = float(lot_size)
+        if lot_size == 0:
+            controls.lot_size_text.value = f"{raw_lot_size:.8f} (below min step {volume_step})"
+            controls.margin_size = 0
+            controls.margin_size_text.value = "0"
+            controls.stop_loss_distance = 0
+            controls.stop_loss_text.value = "0"
+        else:
+            margin_size = Functions.calc_margin(controls.symbol, lot_size, Decimal(str(controls.symbol_price)))
+            controls.margin_size = float(margin_size)
+            controls.lot_size_text.value = format(lot_size, "f")
+            controls.margin_size_text.value = f"{margin_size:.2f}"
+            # Calculate potential loss amount in case of stop (balance * risk%)
+            risk_amount = balance * risk / Decimal("100")
+            controls.stop_loss_distance = float(risk_amount)
+            controls.stop_loss_text.value = f"{risk_amount:.2f}"
+
+        page.update()
+
+    @staticmethod
     def calc(controls, page):
         try:
             balance = Decimal(str(controls.balance))
@@ -73,18 +142,40 @@ class Functions:
             controls.lot_size_text.value = f"{raw_lot_size:.8f} (below min step {volume_step})"
             controls.margin_size = 0
             controls.margin_size_text.value = "0"
+            controls.stop_loss_distance = 0
+            controls.stop_loss_text.value = "0"
         else:
             margin_size = Functions.calc_margin(controls.symbol, lot_size, Decimal(str(controls.symbol_price)))
             controls.margin_size = float(margin_size)
             controls.lot_size_text.value = format(lot_size, "f")
             controls.margin_size_text.value = f"{margin_size:.2f}"
+            # Calculate potential loss amount in case of stop (balance * risk%)
+            risk_amount = balance * risk / Decimal("100")
+            controls.stop_loss_distance = float(risk_amount)
+            controls.stop_loss_text.value = f"{risk_amount:.2f}"
 
         page.update()
 
     @staticmethod
     def update_risk(e, controls, page):
-        controls.risk = float(e.control.value)
+        value = e.control.value.strip()
+        try:
+            controls.risk = float(value) if value else 1
+        except ValueError:
+            controls.risk = 1
         controls.risk_value_text.value = f"{controls.risk}"
+        page.update()
+
+    @staticmethod
+    def update_pipet_text(e, controls, page):
+        value = e.control.value.strip()
+        try:
+            val = float(value) if value else 1
+            controls.pipet_size = val
+            controls.pipet_value_text.value = f"{val}%"
+        except ValueError:
+            controls.pipet_size = 0
+            controls.pipet_value_text.value = "Invalid"
         page.update()
 
     @staticmethod

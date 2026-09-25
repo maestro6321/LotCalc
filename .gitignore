@@ -17,6 +17,3 @@ classes/__pycache__/
 # Build
 build/
 dist/
-
-# Generated assets
-assets/

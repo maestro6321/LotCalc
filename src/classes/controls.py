@@ -8,7 +8,7 @@ class ControlsPage:
         self.risk = 1
         self.risk_value_text = ft.Text(str(self.risk)) 
         self.pipet_size = 1
-        self.pipet_value_text = ft.Text(str(self.pipet_size))
+        self.pipet_value_text = ft.Text(f"{self.pipet_size}%")
         self.symbol = "XAUUSD"
         self.leverage = 1
         self.leverage_value_text = ft.Text(str(self.leverage), color=ft.Colors.RED)
@@ -28,6 +28,8 @@ class ControlsPage:
         self.symbol_price_text = ft.Text(str(self.symbol_price), color=ft.Colors.BLUE_400)
         self.margin_size = 0
         self.margin_size_text = ft.Text(str(self.margin_size), color=ft.Colors.ORANGE_400)
+        self.stop_loss_distance = 0
+        self.stop_loss_text = ft.Text(str(self.stop_loss_distance), color=ft.Colors.RED_400)
 
     async def run(self, page: ft.Page):
         if page.web:
@@ -43,19 +45,19 @@ class ControlsPage:
             Functions.refresh(_e, self, page, show_dialog=False)
 
 
-        pipet_slider = ft.Slider(
-            min=0,
-            max=2000,
-            value=self.pipet_size,
-            label="{value}%",
-            on_change=lambda e: Functions.update_pipet_slider(e, self, page),
+        stop_text_field = ft.TextField(
+            label="Stop %",
+            value=str(self.pipet_size),
+            width=120, height=40,
+            border=ft.OutlineInputBorder(side=ft.BorderSide(color=ft.Colors.WHITE_38)),
+            on_change=lambda e: Functions.update_pipet_text(e, self, page),
         )
 
         risk_text_field = ft.TextField(
             label="Risk %",
             value=str(self.risk),
             width=120, height=40,
-            border_color=ft.Colors.WHITE_38,
+            border=ft.OutlineInputBorder(side=ft.BorderSide(color=ft.Colors.WHITE_38)),
             on_change=lambda e: Functions.update_risk(e, self, page),
         )
 
@@ -64,7 +66,7 @@ class ControlsPage:
             height=45,
             menu_width=220,
             menu_height=200,
-            border_color=ft.Colors.WHITE_38,
+            border=ft.OutlineInputBorder(side=ft.BorderSide(color=ft.Colors.WHITE_38)),
             content_padding=10,
             label="Symbol",
             hint_text="Search symbol",
@@ -85,7 +87,7 @@ class ControlsPage:
             alignment=ft.Alignment.BOTTOM_CENTER,
             content=ft.Row(
                 [
-                    ft.FilledButton("Calculate", width=120,  on_click=lambda _e: Functions.calc(self , page)),
+                    ft.FilledButton("Calculate", width=120,  on_click=lambda _e: Functions.calc_from_percent(self , page)),
                     ft.OutlinedButton("Exit", width=120, on_click=exit_app),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
@@ -123,8 +125,8 @@ class ControlsPage:
         main.controls.append(
             ft.Row(
                 [
-                    ft.Text("Pipet Size:"),
-                    pipet_slider,
+                    ft.Text("Stop %:"),
+                    stop_text_field,
                     self.pipet_value_text,
                 ],
                 spacing=20,
@@ -193,6 +195,9 @@ class ControlsPage:
                 controls=[
                     ft.Text("Lot Size:"),
                     self.lot_size_text,
+                    ft.Container(expand=True),
+                    ft.Text("Potential Loss:"),
+                    self.stop_loss_text,
                 ]
             )
         )
@@ -207,7 +212,6 @@ class ControlsPage:
                 ]
             )
         )
-
 
         panel = ft.SafeArea(
             expand=True,

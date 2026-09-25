@@ -1,2 +1,0 @@
-flet==1.0.0
-MetaTrader5

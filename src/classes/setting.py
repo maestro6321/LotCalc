@@ -3,11 +3,13 @@ import flet as ft
 class MyApp:
     def __init__(self):
         # windows setting
-        self.title = "My App"
+        self.title = "LotCalc"
         self.window_width = 400
         self.window_height = 400
         self.resizable = False
         self.maximizable = False
+
+        self.icon = "src/assets/icon.png"
 
         #layout settings
         self.horizontal_alignment = ft.CrossAxisAlignment.CENTER
@@ -21,6 +23,7 @@ class MyApp:
         page.window.height = self.window_height
         page.window.resizable = self.resizable
         page.window.maximizable = self.maximizable
+        page.window.icon = self.icon
 
     def run(self, page: ft.Page):
         self.setup_page(page)
