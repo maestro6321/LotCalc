@@ -1,196 +1,307 @@
 # 🏦 LotCalc — MetaTrader 5 Risk & Lot Size Calculator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
-[![Flet](https://img.shields.io/badge/Flet-1.0.0-red.svg)](https://flet.dev/)
-[![MetaTrader5](https://img.shields.io/badge/MetaTrader5-5.0.0-green.svg)](https://www.metatrader5.com/)
+> A lightweight Windows desktop application for calculating position size based on account balance, risk percentage, and stop-loss percentage, using live market data from MetaTrader 5.
 
-> A modern, desktop cross-platform risk management tool built with **Flet** for **MetaTrader 5** traders. Calculate optimal lot sizes based on your account balance, risk percentage, and pip value — with live market data pulled directly from MT5.
+LotCalc connects directly to a running MetaTrader 5 terminal and calculates an appropriate trading volume based on the selected symbol's live trading specifications.
 
 ---
 
 ## 🚀 Features
 
-- **🎯 Smart Lot Calculation** — Auto-calculates lot size based on balance, risk %, and pipet size
-- **📊 Live Market Data** — Fetches real-time leverage, tick size, contract size, and symbol price from MetaTrader 5
-- **🔍 Symbol Search** — Searchable dropdown with live MT5 symbol list
-- **🎛️ Visual Controls** — Intuitive sliders, text fields, and color-coded display values
-- **⚡ One-Click Refresh** — Context menu or button to refresh all market data
-- **🖥️ Native Windows App** — Built as a standalone `.exe` with PyInstaller via Flet
-
-### Calculated Values
-
-| Field | Description |
-|-------|-------------|
-| **Lot Size** | Calculated lot size (below minimum step shown if applicable) |
-| **Price** | Current symbol ask price |
-| **Margin** | Required margin for the calculated lot |
-| **Balance** | Account balance (live from MT5) |
-| **Leverage** | Account leverage |
-| **Tick Size / Value** | Symbol tick specifications |
-| **Contract Size** | Contract size per lot |
-| **Digits** | Symbol price precision |
-| **Volume Step** | Minimum volume increment step |
+- 🎯 **Risk-Based Lot Calculation** — Calculate lot size from account balance and desired risk percentage.
+- 📉 **Percentage-Based Stop Loss** — Define stop loss as a percentage of the current market price instead of relying on broker-specific pip or point conventions.
+- 📊 **Live MT5 Market Data** — Reads symbol price and trading specifications directly from MetaTrader 5.
+- 🔍 **Symbol Search** — Select symbols from the available MT5 symbol list.
+- ⚙️ **Broker-Aware Calculation** — Uses the symbol's tick size and tick value for position sizing.
+- 📐 **Volume Step Handling** — Lot size is normalized according to the broker's supported volume step.
+- 💰 **Live Account Balance** — Uses the current MT5 account balance.
+- 🖥️ **Windows Desktop Application** — Packaged as a standalone Windows application.
+- 🎨 **Custom Application Icon** — Includes the LotCalc application icon in the packaged Windows executable.
+- 🔄 **Live Data Refresh** — Refresh market and account information directly from MT5.
 
 ---
 
-## 📋 Prerequisites
+## 📐 Risk Calculation
 
-| Requirement | Minimum Version | Notes |
-|------------|----------------|-------|
-| Python | `3.11+` | [Download](https://www.python.org/downloads/) |
-| MetaTrader 5 | `5.0+` | [Download](https://www.metatrader5.com/en/download) |
-| Operating System | Windows 10/11 | MT5 is Windows-only |
+LotCalc is designed around percentage-based risk management.
+
+### Risk Amount
+
+The amount of money allocated to the trade is calculated from the account balance and selected risk percentage:
+
+```text
+Risk Amount = Account Balance × Risk %
+```
+
+For example:
+
+```text
+Balance = $6,246.89
+Risk    = 1%
+
+Risk Amount = $6,246.89 × 0.01
+            = $62.4689
+```
+
+### Stop Loss Distance
+
+The stop-loss distance is calculated as a percentage of the current symbol price:
+
+```text
+Stop Distance = Current Price × Stop Loss %
+```
+
+The resulting price distance is then converted into the symbol's tick structure using the live MT5 tick size and tick value.
+
+The final lot size is normalized according to the broker's supported volume step.
+
+> **Important:** Actual trading results can vary because of spread, execution price, commissions, swaps, slippage, and broker-specific symbol specifications.
 
 ---
 
-## ⚙️ Installation
+## 🧪 Example
 
-### 1. Install MetaTrader 5
-Download and install [MetaTrader 5](https://www.metatrader5.com/en/download) and ensure it's running.
+A practical XAUUSD test:
 
-### 2. Clone & Setup
+| Parameter | Value |
+|---|---:|
+| Account Balance | $6,246.89 |
+| Risk | 1% |
+| Stop Loss | 0.12% |
+| Calculated Lot | 0.12 |
+
+The resulting position was tested on XAUUSD with a `0.12` lot position.
+
+The trade generated approximately `$59.28` profit, equivalent to approximately `0.95%` of the account balance.
+
+This example demonstrates the intended relationship between account risk, stop-loss percentage, and calculated position size.
+
+---
+
+## 📊 MT5 Data
+
+LotCalc obtains the required trading information directly from MetaTrader 5.
+
+The application can use:
+
+- Account balance
+- Symbol price
+- Tick size
+- Tick value
+- Contract size
+- Digits
+- Volume step
+- Symbol information
+
+This allows the calculation to adapt to the trading specifications provided by the connected broker.
+
+---
+
+## 📋 Requirements
+
+| Requirement | Version / Condition |
+|---|---|
+| Windows | Windows 10 / 11 (64-bit) |
+| MetaTrader 5 | Installed and running |
+| MT5 Account | Logged in to a trading account |
+| Python | 3.10+ for development |
+| Flet | 1.0.0+ |
+
+MetaTrader 5 must be running when using the application because LotCalc obtains account and symbol information from the MT5 terminal.
+
+---
+
+## 📥 Installation
+
+### Option 1 — Download the Windows Release
+
+Download the latest Windows release from the GitHub Releases page.
+
+1. Download the `LotCalc-vX.X.X-windows.zip` archive.
+2. Extract the archive.
+3. Start `LotCalc.exe`.
+4. Make sure MetaTrader 5 is running and logged in.
+
+No Python installation is required when using the packaged Windows release.
+
+---
+
+### Option 2 — Run from Source
+
+Clone the repository:
+
 ```bash
 git clone https://github.com/maestro6321/LotCalc.git
 cd LotCalc
 ```
 
-### 3. Create Virtual Environment
+Create a virtual environment:
+
 ```bash
 python -m venv .venv
-.venv\Scripts\activate
 ```
 
-### 4. Install Dependencies
+Activate it on Windows:
+
+```powershell
+.venv\Scripts\Activate.ps1
+```
+
+Install the project:
+
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
----
+Run the application:
 
-## 🏃 Usage
-
-### Run the App (Development)
-```bash
-python main.py
-```
-or
 ```bash
 flet run
 ```
 
-### Run with Virtual Environment
-```bash
-.venv\Scripts\activate
-flet run
-```
+---
 
-### How It Works
-1. **Launch** the app — it connects to your running MetaTrader 5 terminal
-2. **Select a symbol** from the searchable dropdown (default: `XAUUSD`)
-3. **Set your Risk %** — percentage of your balance you're willing to risk
-4. **Adjust Pipet Size** — use the slider (0–2000%) to set loss per lot
-5. **Click "Calculate"** — see your optimal lot size, price, and margin
-6. **Refresh** — right-click the app or use the context menu to update market data
+## 🏗️ Project Structure
+
+```text
+LotCalc/
+├── .github/
+│   └── workflows/
+│       └── build.yml
+│
+├── src/
+│   ├── main.py
+│   ├── assets/
+│   │   ├── icon.png
+│   │   └── version.txt
+│   │
+│   └── classes/
+│       ├── __init__.py
+│       ├── controls.py
+│       ├── functions.py
+│       └── setting.py
+│
+├── .gitignore
+├── README.md
+└── pyproject.toml
+```
 
 ---
 
-## 🏗️ Building the App
+## ⚙️ Configuration
 
-### Prerequisites for Building
-- Python `3.12` or `3.13`
-- Git
-- uv (optional — handled by CI)
+Project configuration and Python dependencies are maintained in:
 
-### Build Windows App (Manual)
+```text
+pyproject.toml
+```
+
+The application source is located under:
+
+```text
+src/
+```
+
+Flet is configured to use `src` as the application path.
+
+
+
+---
+
+## 🖥️ Building the Windows Application
+
+The application can be built locally with:
+
 ```bash
-# Activate environment
-.venv\Scripts\activate
-
-# Build
 flet build windows --yes
 ```
 
-The built app will be in `build\windows\`.
+The generated Windows application is placed under:
 
-### Build via GitHub Actions
-Push a tagged release to trigger automated build:
-```bash
-git tag v1.0.0
-git push origin v1.0.0
+```text
+build/windows/
 ```
 
-The CI will:
-- ✅ Install dependencies
-- ✅ Build the Windows `.exe`
-- ✅ Upload as a release asset and build artifact
+### GitHub Actions
+
+The repository includes an automated Windows build workflow.
+
+A published GitHub release triggers the build process:
+
+```text
+GitHub Release
+      ↓
+Checkout tagged commit
+      ↓
+Install Python dependencies
+      ↓
+Build with Flet
+      ↓
+Generate application icons
+      ↓
+Build Windows application
+      ↓
+Create ZIP archive
+      ↓
+Upload release asset
+```
+
+The resulting release package follows this naming convention:
+
+```text
+LotCalc-vX.X.X-windows.zip
+```
+
 
 ---
 
-## 🛠️ Tech Stack
+## 🔒 Risk Management Note
 
-| Technology | Purpose |
-|-----------|---------|
-| [Flet](https://flet.dev/) | GUI framework (Flutter-based, Python) |
-| [MetaTrader5](https://pypi.org/project/MetaTrader5/) | MT5 terminal integration & market data |
-| [Python](https://www.python.org/) | Core logic |
-| [uv](https://github.com/astral-sh/uv) | Fast Python package manager (CI) |
-| [setuptools](https://setuptools.dev/) | Python packaging backend |
+LotCalc is a position-sizing calculator. It does not provide trading signals or guarantee trading results.
 
----
+The calculated lot size depends on the information supplied by MetaTrader 5 and the trading conditions of the connected broker.
 
-## 📁 Project Structure
-
-```
-LotCalc/
-├── main.py                     # App entry point
-├── requirements.txt            # Python dependencies
-├── pyproject.toml              # Project config (build)
-├── .gitignore                  # Git ignore rules
-├── .github/
-│   └── workflows/
-│       └── build.yml           # CI/CD build workflow
-├── classes/
-│   ├── __init__.py             # Package init (re-exports)
-│   ├── setting.py              # App window & layout settings
-│   ├── controls.py             # UI controls & layout
-│   └── functions.py            # MT5 integration & calculations
-└── build/                      # Build output (gitignored)
-    └── windows/
-        └── lotcalc.exe
-```
-
----
-
-## 📊 Versioning
-
-We use [Semantic Versioning](https://semver.org/). Check releases for the latest version.
+Always verify the calculated volume, stop-loss level, contract specifications, and potential loss before placing a trade.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Feel free to open an issue or submit a pull request.
+Contributions and improvements are welcome.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. Fork the repository.
+2. Create a feature branch:
+
+```bash
+git checkout -b feature/my-feature
+```
+
+3. Commit your changes:
+
+```bash
+git commit -m "Add my feature"
+```
+
+4. Push the branch:
+
+```bash
+git push origin feature/my-feature
+```
+
+5. Open a Pull Request.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the **MIT License**.
 
 ---
 
-## 📞 Support
+## ⚠️ Disclaimer
 
-- **Issues**: [GitHub Issues](https://github.com/maestro6321/LotCalc/issues)
-- **Releases**: [GitHub Releases](https://github.com/maestro6321/LotCalc/releases)
+LotCalc is provided as a calculation and position-sizing utility.
 
----
+It is not financial advice and does not guarantee trading performance or profitability.
 
-> ⚠️ **Note**: This tool requires an active MetaTrader 5 terminal and account. It is not affiliated with MetaQuotes Software Corp.
+LotCalc is not affiliated with MetaQuotes Software Corp.
